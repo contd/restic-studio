@@ -3,6 +3,7 @@
 ## Requirements
 
 - Go 1.24 or newer
+- Git and Bash for Make's version-tagging command and its tests
 - `restic` and `autorestic` installed and available on `PATH`
 - An Autorestic v2-style YAML configuration
 - A terminal with keyboard input (macOS, Linux, and Windows)
@@ -17,14 +18,17 @@ With Make installed, run these targets from the project directory:
 make help
 make test
 make docs
+make api-docs
 make build
 make run ARGS='--config /path/to/autorestic.yml'
 make gen
 ```
 
 `build` creates the optimized `restic-studio` executable, `test` runs all Go
-tests, and `docs` prints package documentation with `go doc` without creating
-files. `run` starts the application from source and accepts CLI arguments through
+tests and isolated Git version-tagging tests, and `docs` generates the static
+documentation site in `_site`.
+`api-docs` prints package documentation with `go doc` without creating files.
+`run` starts the application from source and accepts CLI arguments through
 `ARGS`. Override the Go executable with `GO` if needed, for example
 `make build GO=/path/to/go`.
 
@@ -34,6 +38,91 @@ stopping on failure, including when invoked with `-j`. `gen` runs
 an isolated demo repository. It requires Go, Restic, Autorestic, Asciinema 3,
 agg with `--select` support, FFmpeg, Expect, and Node.js. For a build without
 capture dependencies, use `make build`.
+
+### Documentation site
+
+Run `make docs` to generate the GitHub Pages site. The home page is rendered
+from [README.md](README.md), and `development.html` is rendered from this file.
+Both pages include navigation, responsive styling, Markdown tables, and
+heading anchors. Existing images, GIFs, local Asciinema recordings, and example
+configuration files are copied into the site without regenerating captures.
+Mermaid diagrams are rendered in the browser using Mermaid 11.4.1 from jsDelivr;
+rendering requires internet access. If it fails, the page reports the failure
+and retains diagram source.
+
+The generator requires only Go and its module dependencies. Override the
+destination with `make docs SITE_DIR=/path/to/site`. The default `_site`
+directory is ignored by Git; do not use a source directory as the destination.
+Serve `_site` with a local static HTTP server to preview it.
+
+### GitHub Actions, releases, and Pages
+
+The workflow in `.github/workflows/ci.yml` runs on pushes, pull requests, and
+manual dispatches:
+
+1. Run `go vet` and uncached race-enabled tests on Linux, macOS, and Windows
+   with stable Go, plus Linux tests on the minimum supported Go 1.24.
+2. Only after every test job succeeds, build CGO-free Linux, macOS, and Windows
+   binaries for both amd64 and arm64. Each archive includes the binary,
+   README, development guide, and example configuration.
+3. Only after every binary build succeeds, generate the site using `make docs`.
+
+All runs upload binary archives and the generated site as workflow artifacts.
+Cross-compilation does not establish runtime compatibility on every target
+architecture. Tests use helper processes and do not need installed Restic or
+Autorestic; end users still need both executables.
+
+Push a version tag such as `v1.0.0` to publish a GitHub Release with the six
+archives, SHA-256 checksums in `SHA256SUMS`, and generated release notes. The
+release waits for both binary builds and site generation. Re-running a workflow
+for an already-published tag does not replace its release; create a new version
+tag instead.
+
+For Pages, select **Settings -> Pages -> Build and deployment -> Source:
+GitHub Actions** in the GitHub repository. Successful default-branch runs
+deploy the generated site to the `github-pages` environment. Pull requests,
+other branches, and tags generate site artifacts but do not deploy Pages.
+Any configured environment approvals must be granted before deployment.
+
+```sh
+make test TEST_FLAGS='-race -count=1'
+make tag minor
+# Push the exact tag printed by the command:
+git push origin v0.1.0
+```
+
+#### Bump version tags
+
+Use `make tag major`, `make tag minor`, or `make tag patch` from a clean
+worktree with a committed HEAD and a configured Git identity. The command
+creates an annotated local tag at HEAD; it does not commit changes, fetch
+tags, or push anything.
+
+It selects the highest local stable version matching `vMAJOR.MINOR.PATCH`,
+not the most recently created tag. Prerelease tags, build-metadata tags,
+malformed versions, and leading-zero components are ignored. Fetch remote
+tags with `git fetch --tags` first if needed to ensure the local tag list is
+current.
+
+| Command | Starting at `v0.1.1` | Reset components |
+| --- | --- | --- |
+| `make tag major` | `v1.0.0` | Minor and patch |
+| `make tag minor` | `v0.2.0` | Patch |
+| `make tag patch` | `v0.1.2` | None |
+
+Without matching tags, the starting version is `v0.0.0`: major creates
+`v1.0.0`, minor creates `v0.1.0`, and patch creates `v0.0.1`. Tracked changes
+and non-ignored untracked files cause an explicit failure. Existing tags
+are never overwritten. Push the exact new tag printed by the command to
+trigger the GitHub Release workflow. Run tagging separately from other Make
+targets; only one bump argument is accepted.
+
+`make test` also runs `scripts/tag_test.sh`, which exercises tagging in
+disposable Git repositories without modifying this project's tags.
+
+GitHub workflows require the project files to be committed and pushed to a
+GitHub repository. Generated screenshots and recordings must be committed too;
+CI consumes those assets rather than running `make gen`.
 
 ### Go commands
 

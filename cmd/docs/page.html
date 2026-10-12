@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { max-width: 1000px; margin: auto; padding: 1.5rem; font: 17px/1.6 system-ui, sans-serif; }
+    nav { display: flex; flex-wrap: wrap; gap: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #888; }
+    a { color: light-dark(#075bb5, #8cc8ff); }
+    h1, h2, h3 { line-height: 1.25; }
+    h2 { margin-top: 2.5rem; }
+    img, svg { max-width: 100%; height: auto; }
+    pre { padding: 1rem; overflow: auto; background: light-dark(#f1f3f5, #20252d); border-radius: 6px; }
+    code { font-size: .9em; }
+    table { display: block; overflow-x: auto; border-collapse: collapse; }
+    th, td { padding: .5rem .75rem; border: 1px solid #888; text-align: left; }
+    details { padding: .75rem; border: 1px solid #888; border-radius: 6px; }
+    summary { cursor: pointer; }
+    .mermaid { overflow-x: auto; text-align: center; }
+  </style>
+</head>
+<body>
+  <nav aria-label="Main navigation">
+    <a href="index.html">Restic Studio manual</a>
+    <a href="development.html">Development</a>
+  </nav>
+  <main>{{.Body}}</main>
+  <script type="module">
+    for (const code of document.querySelectorAll("pre > code.language-mermaid")) {
+      const diagram = document.createElement("div");
+      diagram.className = "mermaid";
+      diagram.textContent = code.textContent;
+      code.parentElement.replaceWith(diagram);
+    }
+    try {
+      const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs");
+      mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+      await mermaid.run({ querySelector: ".mermaid" });
+    } catch (error) {
+      console.error("Could not render Mermaid diagrams:", error);
+      const notice = document.createElement("p");
+      notice.setAttribute("role", "alert");
+      notice.textContent = "Diagrams could not be rendered. Their Mermaid source is shown below.";
+      document.querySelector("main").prepend(notice);
+    }
+  </script>
+</body>
+</html>

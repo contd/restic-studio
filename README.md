@@ -47,6 +47,7 @@ flowchart LR
 - [Credentials and security](#credentials-and-security)
 - [Troubleshooting](#troubleshooting)
 - [Build and test from source](#build-and-test-from-source)
+- [Development and automation](DEVELOPMENT.md)
 
 ## Screenshots and recorded tests
 
@@ -621,6 +622,19 @@ repository state before manually trying the operation again; Restic Studio
 does not retry it.
 
 ## Build and test from source
+
+With Make installed, `make test` runs tests, `make build` builds the executable,
+and `make docs` generates a GitHub Pages-ready site in `_site`, with this README
+as its home page and a separate [development guide](DEVELOPMENT.md) page.
+`make api-docs` prints Go package documentation.
+
+GitHub Actions tests each push and pull request before building Linux, macOS,
+and Windows release archives for amd64 and arm64. Pushing a version tag such
+as `v1.0.0` publishes those archives and checksums as a GitHub Release after
+the builds and site generation pass. Successful default-branch runs deploy
+the site once GitHub Pages is configured to use **GitHub Actions**.
+See the [development guide](DEVELOPMENT.md#github-actions-releases-and-pages)
+for setup, artifact details, and local documentation generation.
 
 ```sh
 go test ./...
