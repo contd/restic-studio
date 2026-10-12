@@ -1,0 +1,8 @@
+{"version":2,"width":140,"height":36,"timestamp":1791841690,"command":"bash -c \"printf \\\"\\$ go test -race -count=1 ./...\\n\\\"; go test -race -count=1 ./...\"","title":"Restic Studio: tests","env":{"SHELL":"/usr/local/bin/bash"}}
+[0.025304, "o", "$ go test -race -count=1 ./...\r\n"]
+[0.321872, "o", "?   \tgithub.com/restic-studio/restic-studio/cmd/restic-studio\t[no test files]\r\n"]
+[2.51179, "o", "ok  \tgithub.com/restic-studio/restic-studio/internal/app\t1.610s\r\n"]
+[3.105911, "o", "ok  \tgithub.com/restic-studio/restic-studio/internal/config\t2.202s\r\n"]
+[3.77197, "o", "ok  \tgithub.com/restic-studio/restic-studio/internal/runner\t2.868s\r\n"]
+[4.297552, "o", "ok  \tgithub.com/restic-studio/restic-studio/internal/tui\t3.353s\r\n"]
+[4.330459, "x", "0"]

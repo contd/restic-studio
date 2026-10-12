@@ -1,0 +1,24 @@
+version: 2
+
+locations:
+  home:
+    from:
+      - ~/Documents
+      - ~/Pictures
+    to:
+      - encrypted-local
+    options:
+      forget:
+        keep-daily: 7
+  projects:
+    from: ~/src
+    to: encrypted-local
+
+backends:
+  encrypted-local:
+    type: local
+    path: /path/to/restic-repository
+    key: REPLACE_WITH_A_REPOSITORY_PASSWORD
+    env:
+      AWS_ACCESS_KEY_ID: REPLACE_WITH_AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: REPLACE_WITH_AWS_SECRET_ACCESS_KEY

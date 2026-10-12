@@ -1,0 +1,127 @@
+#!/usr/bin/expect -f
+set timeout 40
+log_user 1
+set work $env(CAPTURE_WORK)
+
+proc await {text} {
+    expect {
+        -exact $text {}
+        timeout { puts stderr "Timed out waiting for: $text"; exit 1 }
+        eof { puts stderr "Application exited before: $text"; exit 1 }
+    }
+}
+
+proc frame {name} {
+    after 2800
+    # An invisible OSC annotation pins the exact recording event for this frame.
+    puts -nonewline stdout "\033\]777;capture;$name\007"
+    flush stdout
+}
+
+proc down {} {
+    send "\033\[B"
+    after 350
+}
+
+spawn -noecho $work/restic-studio --config $work/autorestic.yml
+stty rows 36 columns 140 < $spawn_out(slave,name)
+await "configured backup locations"
+frame dashboard
+
+send "\r"
+await "Backup locations"
+frame locations
+send "\r"
+await "Proceed? \[y/N\]"
+frame backup-confirmation
+send "n"
+after 300
+send "\033"
+await "Reload configuration"
+
+send "\033\[B"
+after 150
+send "\r"
+await "Restic backends"
+after 2800
+send "\r"
+await "Repository tools"
+frame repository-tools
+
+send "\r"
+await "Exit code 0"
+await "no errors were found"
+frame repository-check
+send "\r"
+after 200
+down
+down
+after 1800
+send "\r"
+await "Exit code 0"
+await "Total File Count"
+after 3500
+send "\r"
+after 200
+down
+after 1800
+send "\r"
+await "Object type"
+after 2800
+send "\r"
+await "Exit code 0"
+after 3500
+send "\r"
+after 200
+down
+after 1800
+send "\r"
+await "Snapshot ID"
+after 2800
+send "\r"
+await "Path in snapshot"
+after 2800
+send "\r"
+await "Exit code 0"
+await "tasks.txt"
+after 3500
+send "\r"
+after 200
+down
+down
+after 1800
+send "\r"
+await "Exit code 0"
+await "Created"
+after 3500
+send "\r"
+after 200
+for {set i 0} {$i < 5} {incr i} {
+    send "\033\[A"
+    after 350
+}
+after 1800
+send "\r"
+await "demo-laptop"
+frame snapshots
+
+send "r"
+await "Restore destination"
+after 2800
+foreach char [split "restore-preview" ""] {
+    send -- $char
+    after 100
+}
+after 1200
+send "\r"
+await "Proceed? \[y/N\]"
+frame restore-confirmation
+send "n"
+after 2000
+send "\003"
+expect eof
+set result [wait]
+if {[lindex $result 3] != 0} {
+    puts stderr "Application exited with status [lindex $result 3]"
+    exit 1
+}
