@@ -631,8 +631,11 @@ as its home page and a separate [development guide](DEVELOPMENT.md) page.
 GitHub Actions tests each push and pull request before building Linux, macOS,
 and Windows release archives for amd64 and arm64. Pushing a version tag such
 as `v1.0.0` publishes those archives and checksums as a GitHub Release after
-the builds and site generation pass. Successful default-branch runs deploy
-the site once GitHub Pages is configured to use **GitHub Actions**.
+all tests, all binary builds, site generation, and the GitHub Pages deployment
+from the same run succeed. Default-branch runs and version-tag pushes deploy
+the site once GitHub Pages is configured to use **GitHub Actions** and the
+`github-pages` environment permits the default branch and `v*` tags. A failed
+deployment blocks release publication.
 See the [development guide](DEVELOPMENT.md#github-actions-releases-and-pages)
 for setup, artifact details, and local documentation generation.
 

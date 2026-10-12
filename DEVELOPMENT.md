@@ -66,6 +66,11 @@ manual dispatches:
    binaries for both amd64 and arm64. Each archive includes the binary,
    README, development guide, and example configuration.
 3. Only after every binary build succeeds, generate the site using `make docs`.
+4. On the default branch or a pushed `v*` tag, deploy that run's generated site
+   to GitHub Pages.
+5. On a pushed `v*` tag, publish the GitHub Release only after all tests, all
+   binary builds, site generation, and the Pages deployment succeed. A failed,
+   cancelled, or skipped prerequisite prevents release publication.
 
 All runs upload binary archives and the generated site as workflow artifacts.
 Cross-compilation does not establish runtime compatibility on every target
@@ -74,15 +79,31 @@ Autorestic; end users still need both executables.
 
 Push a version tag such as `v1.0.0` to publish a GitHub Release with the six
 archives, SHA-256 checksums in `SHA256SUMS`, and generated release notes. The
-release waits for both binary builds and site generation. Re-running a workflow
+release verifies all six archives and their checksums, and waits for a
+successful Pages deployment from the same run. Re-running a workflow
 for an already-published tag does not replace its release; create a new version
 tag instead.
 
 For Pages, select **Settings -> Pages -> Build and deployment -> Source:
 GitHub Actions** in the GitHub repository. Successful default-branch runs
-deploy the generated site to the `github-pages` environment. Pull requests,
-other branches, and tags generate site artifacts but do not deploy Pages.
-Any configured environment approvals must be granted before deployment.
+deploy the generated site to the `github-pages` environment, as do pushes of
+version tags. A tag deployment publishes the documentation from the tagged
+commit, so a release ships with its matching documentation. Pull requests and
+other branches generate site artifacts but do not deploy Pages or publish
+releases.
+
+Under **Settings -> Environments -> github-pages**, ensure deployment branch
+and tag rules allow both the default branch and tags matching `v*`. If the
+environment is restricted to the default branch only, tag deployment will be
+blocked and no release will be published. Any configured environment approvals
+must be granted before deployment. Pages deployments are serialized without
+cancelling an in-progress deployment.
+
+If tests, builds, site generation, or deployment fail, fix the failure and
+retry the failed jobs before a release is published. An existing tag uses the
+workflow committed at that tag; workflow fixes must be committed and included
+in a new version tag to take effect. The tagging helper only creates local
+tags, so remember to push the new tag.
 
 ```sh
 make test TEST_FLAGS='-race -count=1'
